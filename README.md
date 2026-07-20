@@ -25,7 +25,11 @@
 
 流程從 VOC 格式資料集開始，經過資料切分與標註清單轉換、Freeze／Unfreeze 兩階段訓練，再使用最佳權重進行多模式推論、mAP 評估與 Threshold Analysis。
 
-![RetinaNet Face Mask Detection 端到端工作流程](docs/diagrams/readme_01_flowchart_project_workflow.png)
+<p align="center">
+  <a href="docs/diagrams/readme_01_flowchart_project_workflow.png">
+    <img src="docs/diagrams/readme_01_flowchart_project_workflow.png" alt="RetinaNet Face Mask Detection 端到端工作流程" width="760">
+  </a>
+</p>
 
 [檢視 Mermaid 原始檔](docs/diagrams/readme_01_flowchart_project_workflow.mmd)
 
@@ -33,7 +37,11 @@
 
 模型以 ResNet50 擷取 C3、C4、C5 特徵，透過 FPN 建立 P3 至 P7 多尺度特徵圖，再由所有尺度共用的 Regression Head 與 Classification Head 產生候選框偏移量及類別機率。推論階段最後執行 Anchor Decode、confidence filter 與 class-wise NMS。
 
-![RetinaNet 模型架構](docs/diagrams/readme_02_flowchart_retinanet_architecture.png)
+<p align="center">
+  <a href="docs/diagrams/readme_02_flowchart_retinanet_architecture.png">
+    <img src="docs/diagrams/readme_02_flowchart_retinanet_architecture.png" alt="RetinaNet 模型架構" width="520">
+  </a>
+</p>
 
 [檢視 Mermaid 原始檔](docs/diagrams/readme_02_flowchart_retinanet_architecture.mmd)
 
