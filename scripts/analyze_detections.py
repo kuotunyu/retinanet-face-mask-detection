@@ -277,8 +277,21 @@ def draw_box(draw, box, color, label):
     draw.text((left + 3, text_y + 1), label, fill="white")
 
 
+def parse_probability(value):
+    try:
+        probability = float(value)
+    except (TypeError, ValueError):
+        raise argparse.ArgumentTypeError("Expected a number between 0 and 1.")
+    if not 0.0 <= probability <= 1.0:
+        raise argparse.ArgumentTypeError("Expected a number between 0 and 1.")
+    return probability
+
+
 def parse_thresholds(value):
-    return [float(item.strip()) for item in value.split(",") if item.strip()]
+    values = [item.strip() for item in value.split(",") if item.strip()]
+    if not values:
+        raise argparse.ArgumentTypeError("Specify at least one threshold.")
+    return [parse_probability(item) for item in values]
 
 
 def build_parser():
@@ -288,15 +301,15 @@ def build_parser():
     sweep = subparsers.add_parser("threshold-sweep", help="Compute precision/recall/F1 across confidence thresholds.")
     sweep.add_argument("--map-out", default="map_out", help="Path containing detection-results and ground-truth folders.")
     sweep.add_argument("--thresholds", type=parse_thresholds, default=parse_thresholds("0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9"))
-    sweep.add_argument("--min-iou", type=float, default=0.5)
+    sweep.add_argument("--min-iou", type=parse_probability, default=0.5)
     sweep.add_argument("--include-difficult", action="store_true")
     sweep.add_argument("--output", default="analysis/threshold_sweep.csv")
     sweep.set_defaults(func=threshold_sweep)
 
     errors = subparsers.add_parser("errors", help="List false positives and false negatives.")
     errors.add_argument("--map-out", default="map_out", help="Path containing detection-results and ground-truth folders.")
-    errors.add_argument("--threshold", type=float, default=0.5)
-    errors.add_argument("--min-iou", type=float, default=0.5)
+    errors.add_argument("--threshold", type=parse_probability, default=0.5)
+    errors.add_argument("--min-iou", type=parse_probability, default=0.5)
     errors.add_argument("--include-difficult", action="store_true")
     errors.add_argument("--include-tp", action="store_true", help="Also include true positives in the CSV/rendered images.")
     errors.add_argument("--max-rows", type=int, default=0, help="Limit CSV rows. 0 means no limit.")
