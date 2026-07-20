@@ -40,10 +40,12 @@ def resolve_path(path):
 def str2bool(value):
     if isinstance(value, bool):
         return value
-    value = value.lower()
-    if value in ("true", "1", "yes", "y", "on"):
+    if not isinstance(value, str):
+        raise ValueError("Expected a boolean value, got: {}".format(value))
+    normalized = value.strip().lower()
+    if normalized in ("true", "1", "yes", "y", "on"):
         return True
-    if value in ("false", "0", "no", "n", "off"):
+    if normalized in ("false", "0", "no", "n", "off"):
         return False
     raise ValueError("Expected a boolean value, got: {}".format(value))
 
