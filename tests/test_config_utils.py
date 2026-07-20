@@ -11,9 +11,15 @@ class ConfigUtilsTest(unittest.TestCase):
         for value in [False, 'false', 'False', '0', 'no', 'n', 'off']:
             self.assertFalse(str2bool(value))
 
+    def test_str2bool_ignores_surrounding_whitespace(self):
+        self.assertTrue(str2bool('  true  '))
+        self.assertFalse(str2bool('\tfalse\n'))
+
     def test_str2bool_rejects_unknown_values(self):
         with self.assertRaises(ValueError):
             str2bool('maybe')
+        with self.assertRaises(ValueError):
+            str2bool(1)
 
     def test_parse_int_list(self):
         self.assertEqual(parse_int_list('600,600'), [600, 600])
