@@ -1,0 +1,37 @@
+flowchart TD
+    subgraph Features["多尺度特徵擷取"]
+        direction TB
+        Input["輸入影像<br/>600 × 600 × 3"] --> Backbone["ResNet50 Backbone<br/>C3 + C4 + C5 feature maps"]
+        Backbone --> FPN["Feature Pyramid Network<br/>top-down pathway + lateral connections"]
+        FPN --> Pyramid["P3 + P4 + P5 + P6 + P7<br/>256-channel feature maps"]
+    end
+
+    subgraph Heads["共享 Retina Head"]
+        direction TB
+        Pyramid --> Regression["Regression Head<br/>4 Conv layers<br/>training: Smooth L1 Loss"]
+        Pyramid --> Classification["Classification Head<br/>4 Conv layers + Sigmoid<br/>training: Focal Loss"]
+        Regression --> Offsets["各層 bbox offsets<br/>4 values per anchor"]
+        Classification --> Probabilities["各層 class probabilities<br/>K values per anchor"]
+    end
+
+    subgraph Postprocess["推論後處理"]
+        direction TB
+        Anchors["P3 至 P7 Anchors<br/>5 個 base sizes<br/>3 scales × 3 ratios = 9 anchors / location"] --> Decode["DecodeBox<br/>套用 bbox offsets"]
+        Offsets --> Decode
+        Probabilities --> Decode
+        Decode --> Confidence["Confidence filter<br/>移除低分候選框"]
+        Confidence --> NMS["Class-wise NMS<br/>依 IoU 移除重疊框"]
+        NMS --> Output["最終偵測結果<br/>bbox + class + confidence"]
+    end
+
+    classDef input fill:#FFF3BF,stroke:#E67700,stroke-width:2px,color:#5F3C00
+    classDef feature fill:#D3F9D8,stroke:#2B8A3E,stroke-width:2px,color:#1B4332
+    classDef head fill:#D0EBFF,stroke:#1971C2,stroke-width:2px,color:#0B3D66
+    classDef postprocess fill:#FFE8CC,stroke:#D9480F,stroke-width:2px,color:#7F2704
+    classDef output fill:#E5DBFF,stroke:#6741D9,stroke-width:2px,color:#3B217A
+
+    class Input,Anchors input
+    class Backbone,FPN,Pyramid feature
+    class Regression,Classification,Offsets,Probabilities head
+    class Decode,Confidence,NMS postprocess
+    class Output output
