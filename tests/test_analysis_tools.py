@@ -1,6 +1,7 @@
+import argparse
 import unittest
 
-from scripts.analyze_detections import iou, summarize_threshold
+from scripts.analyze_detections import iou, parse_probability, parse_thresholds, summarize_threshold
 
 
 class DetectionAnalysisTest(unittest.TestCase):
@@ -36,6 +37,14 @@ class DetectionAnalysisTest(unittest.TestCase):
         self.assertEqual(by_class["overall"]["tp"], 1)
         self.assertEqual(by_class["overall"]["fp"], 1)
         self.assertEqual(by_class["overall"]["fn"], 1)
+
+    def test_probability_parsers_reject_invalid_thresholds(self):
+        self.assertEqual(parse_thresholds("0.1, 0.5, 1"), [0.1, 0.5, 1.0])
+        for value in ("", "-0.1", "1.1"):
+            with self.assertRaises(argparse.ArgumentTypeError):
+                parse_thresholds(value)
+        with self.assertRaises(argparse.ArgumentTypeError):
+            parse_probability("not-a-number")
 
 
 if __name__ == "__main__":
