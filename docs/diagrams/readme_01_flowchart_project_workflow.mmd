@@ -1,0 +1,41 @@
+flowchart TD
+    subgraph Preparation["資料準備"]
+        direction TB
+        Dataset["VOCdevkit/VOC2007<br/>JPEGImages + Annotations XML"] --> Annotation["voc_annotation.py<br/>資料切分與標註清單轉換"]
+        Annotation --> Splits["ImageSets/Main<br/>train / val / test"]
+        Annotation --> TrainLists["2007_train.txt + 2007_val.txt<br/>影像路徑、bbox 與 class id"]
+    end
+
+    subgraph Training["模型訓練"]
+        direction TB
+        TrainLists --> Train["train.py<br/>RetinanetDatasets + anchors"]
+        Train --> Freeze["Freeze stage<br/>凍結 ResNet50 backbone"]
+        Freeze --> Unfreeze["Unfreeze stage<br/>全模型 fine-tuning"]
+        Unfreeze --> Weights[("logs/<br/>最佳 validation loss 的 .h5 weights")]
+    end
+
+    subgraph Application["推論與 Demo"]
+        direction TB
+        Weights --> Inference["predict.py / demo.py<br/>載入模型與共用設定"]
+        Inference --> Modes["單張影像、影片、攝影機<br/>批次資料夾、FPS、Gradio"]
+        Modes --> Visuals["偵測結果<br/>bbox + class + confidence"]
+    end
+
+    subgraph Evaluation["評估與錯誤分析"]
+        direction TB
+        Weights --> Map["get_map.py<br/>VOC test set evaluation"]
+        Splits --> Map
+        Map --> MapOut["map_out/<br/>detection-results + ground-truth"]
+        MapOut --> Metrics["AP / mAP<br/>Precision-Recall curve"]
+        MapOut --> Analysis["scripts/analyze_detections.py<br/>threshold sweep + FP / FN cases"]
+    end
+
+    classDef input fill:#FFF3BF,stroke:#E67700,stroke-width:2px,color:#5F3C00
+    classDef process fill:#D3F9D8,stroke:#2B8A3E,stroke-width:2px,color:#1B4332
+    classDef artifact fill:#D0EBFF,stroke:#1971C2,stroke-width:2px,color:#0B3D66
+    classDef output fill:#E5DBFF,stroke:#6741D9,stroke-width:2px,color:#3B217A
+
+    class Dataset input
+    class Annotation,Train,Freeze,Unfreeze,Inference,Modes,Map,Analysis process
+    class Splits,TrainLists,Weights,MapOut artifact
+    class Visuals,Metrics output

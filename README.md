@@ -17,6 +17,26 @@
 - 使用共用設定檔 `configs/mask_retinanet.yaml` 管理模型、路徑、訓練與評估參數
 - 提供 Gradio demo，方便非工程背景使用者快速試用
 
+## 系統架構
+
+本節將專案拆成端到端工作流程與 RetinaNet 模型架構。所有主要 CLI 都可讀取 `configs/mask_retinanet.yaml`，確保資料路徑、輸入尺寸、Anchor、訓練與評估門檻維持一致。
+
+### 端到端工作流程
+
+流程從 VOC 格式資料集開始，經過資料切分與標註清單轉換、Freeze／Unfreeze 兩階段訓練，再使用最佳權重進行多模式推論、mAP 評估與 Threshold Analysis。
+
+![RetinaNet Face Mask Detection 端到端工作流程](docs/diagrams/readme_01_flowchart_project_workflow.png)
+
+[檢視 Mermaid 原始檔](docs/diagrams/readme_01_flowchart_project_workflow.mmd)
+
+### RetinaNet 模型架構
+
+模型以 ResNet50 擷取 C3、C4、C5 特徵，透過 FPN 建立 P3 至 P7 多尺度特徵圖，再由所有尺度共用的 Regression Head 與 Classification Head 產生候選框偏移量及類別機率。推論階段最後執行 Anchor Decode、confidence filter 與 class-wise NMS。
+
+![RetinaNet 模型架構](docs/diagrams/readme_02_flowchart_retinanet_architecture.png)
+
+[檢視 Mermaid 原始檔](docs/diagrams/readme_02_flowchart_retinanet_architecture.mmd)
+
 ## 偵測類別
 
 | 類別 | 說明 |
