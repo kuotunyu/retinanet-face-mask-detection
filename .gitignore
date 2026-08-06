@@ -33,18 +33,28 @@ VOCdevkit/VOC2007/ImageSets/Main/*.txt
 
 # Environment / packaging
 .env
+.env.*
+!.env.example
 .venv/
 venv/
 *.egg-info/
 dist/
 build/
 
-# IDE
+# IDE / OS
 .vscode/
 .idea/
 *.suo
 *.user
-
-# OS
 Thumbs.db
 .DS_Store
+
+# Local AI-tool configuration and private notes
+.claude/
+.agents/
+CLAUDE.md
+PLAN.md
+PROGRESS.md
+interview*.md
+INTERVIEW_PREP.md
+*.private.md
