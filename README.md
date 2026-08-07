@@ -29,11 +29,11 @@
 ### 1. 端到端工作流程
 
 ```mermaid
-%%{init: {'themeVariables': {'fontSize': '20px'}}}%%
+%%{init: {'themeVariables': {'fontSize': '18px'}}}%%
 flowchart TD
     subgraph Preparation ["1. 資料準備與切分"]
         direction LR
-        Dataset["VOCdevkit/VOC2007<br/>(JPEGImages + XML 標註)"] --> Annotation["voc_annotation.py<br/>(資料切分與標註轉換)"] --> TrainLists["2007_train.txt + 2007_val.txt<br/>(影像路徑、BBox 與 Class ID)"]
+        Dataset[("VOCdevkit/VOC2007<br/>(JPEGImages + XML 標註)")] --> Annotation["voc_annotation.py<br/>(資料切分與標註轉換)"] --> TrainLists[("2007_train.txt + 2007_val.txt<br/>(影像路徑、BBox 與 Class ID)")]
     end
 
     subgraph Training ["2. 兩階段模型訓練"]
@@ -43,7 +43,7 @@ flowchart TD
 
     subgraph Application ["3. 多模式推論與 mAP 評估"]
         direction LR
-        Weights --> Inference["predict.py / demo.py<br/>(載入模型與 YAML 設定)"] --> Modes["多模式推論<br/>(單圖 / 影片 / 攝影機 / Gradio)"] --> Map["get_map.py 評估<br/>(mAP@0.5 76.05% 與 PR 曲線)"]
+        Weights --> Inference["predict.py / demo.py<br/>(載入模型與 YAML 設定)"] --> Modes["多模式推論<br/>(單圖 / 影片 / 攝影機 / Gradio)"] --> Map(["get_map.py 評估<br/>(mAP@0.5 76.05% 與 PR 曲線)"])
     end
 
     Preparation --> Training --> Application
@@ -55,16 +55,20 @@ flowchart TD
     class Preparation,Dataset,Annotation,TrainLists prepStyle
     class Training,Freeze,Unfreeze,Weights trainStyle
     class Application,Inference,Modes,Map appStyle
+
+    style Preparation fill:#fffcf0,stroke:#f59f00,stroke-width:2px,stroke-dasharray: 4 4
+    style Training fill:#f8f9fa,stroke:#1971c2,stroke-width:2px,stroke-dasharray: 4 4
+    style Application fill:#f4fbf7,stroke:#0ca678,stroke-width:2px,stroke-dasharray: 4 4
 ```
 
 ### 2. RetinaNet (ResNet50 + FPN) 模型架構
 
 ```mermaid
-%%{init: {'themeVariables': {'fontSize': '20px'}}}%%
+%%{init: {'themeVariables': {'fontSize': '18px'}}}%%
 flowchart TD
     subgraph Features ["1. 多尺度特徵擷取"]
         direction LR
-        Input["輸入影像<br/>(600 × 600 × 3)"] --> Backbone["ResNet50 Backbone<br/>(C3 + C4 + C5 特徵圖)"] --> FPN["Feature Pyramid Network<br/>(Top-down + Lateral Connections)"] --> Pyramid["P3 至 P7 特徵金字塔<br/>(256-channel 特徵圖)"]
+        Input[("輸入影像<br/>600 × 600 × 3")] --> Backbone["ResNet50 Backbone<br/>(C3 + C4 + C5 特徵圖)"] --> FPN["Feature Pyramid Network<br/>(Top-down + Lateral Connections)"] --> Pyramid["P3 至 P7 特徵金字塔<br/>(256-channel 特徵圖)"]
     end
 
     subgraph Heads ["2. 共享 Retina Head"]
@@ -74,7 +78,7 @@ flowchart TD
 
     subgraph Postprocess ["3. 推論後處理"]
         direction LR
-        Regression & Classification --> Decode["DecodeBox<br/>(套用 Anchor BBox Offsets)"] --> NMS["Class-wise NMS<br/>(過濾低分框與重疊框)"] --> Output["最終偵測結果<br/>(BBox + Class + Confidence)"]
+        Regression & Classification --> Decode["DecodeBox<br/>(套用 Anchor BBox Offsets)"] --> NMS["Class-wise NMS<br/>(過濾低分框與重疊框)"] --> Output(["最終偵測結果<br/>BBox + Class + Confidence"])
     end
 
     Features --> Heads --> Postprocess
@@ -86,6 +90,10 @@ flowchart TD
     class Features,Input,Backbone,FPN,Pyramid featStyle
     class Heads,Regression,Classification headStyle
     class Postprocess,Decode,NMS,Output postStyle
+
+    style Features fill:#f8f9fa,stroke:#1971c2,stroke-width:2px,stroke-dasharray: 4 4
+    style Heads fill:#faf5ff,stroke:#7b1fa2,stroke-width:2px,stroke-dasharray: 4 4
+    style Postprocess fill:#f4fbf7,stroke:#0ca678,stroke-width:2px,stroke-dasharray: 4 4
 ```
 
 ---
