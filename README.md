@@ -11,7 +11,7 @@
 
 ---
 
-## 技術亮點
+## 系統設計與關鍵特性
 
 1. **RetinaNet 雙頭架構與 Focal Loss**：
    結合 ResNet50 特徵擷取與 FPN (Feature Pyramid Network) 多尺度特徵融合，使用 Focal Loss 解決正負樣本嚴重失衡。
@@ -32,40 +32,29 @@
 %%{init: {'themeVariables': {'fontSize': '20px'}}}%%
 flowchart TD
     subgraph Preparation ["1. 資料準備與切分"]
-        Dataset["VOCdevkit/VOC2007<br/>JPEGImages + Annotations XML"] --> Annotation["voc_annotation.py<br/>資料切分與標註轉換"]
-        Annotation --> Splits["ImageSets/Main<br/>train / val / test"]
-        Annotation --> TrainLists["2007_train.txt + 2007_val.txt<br/>影像路徑、bbox 與 class id"]
+        direction LR
+        Dataset["VOCdevkit/VOC2007<br/>(JPEGImages + XML 標註)"] --> Annotation["voc_annotation.py<br/>(資料切分與標註轉換)"] --> TrainLists["2007_train.txt + 2007_val.txt<br/>(影像路徑、BBox 與 Class ID)"]
     end
 
-    subgraph Training ["2. 模型訓練"]
-        TrainLists --> Train["train.py 訓練<br/>RetinanetDatasets + anchors"]
-        Train --> Freeze["Freeze 階段<br/>(凍結 ResNet50 backbone)"]
-        Freeze --> Unfreeze["Unfreeze 階段<br/>(全模型 fine-tuning)"]
-        Unfreeze --> Weights[("logs/<br/>最佳 val_loss 的 .h5 權重")]
+    subgraph Training ["2. 兩階段模型訓練"]
+        direction LR
+        TrainLists --> Freeze["Freeze 階段<br/>(凍結 ResNet50 Backbone)"] --> Unfreeze["Unfreeze 階段<br/>(全模型 Fine-tuning)"] --> Weights[("logs/<br/>最佳 val_loss 的 .h5 權重")]
     end
 
-    subgraph Application ["3. 推論與 Demo"]
-        Weights --> Inference["predict.py / demo.py<br/>載入模型與 YAML 設定"]
-        Inference --> Modes["單張影像、影片、攝影機<br/>批次資料夾、FPS、Gradio"]
-        Modes --> Visuals["偵測結果<br/>bbox + class + confidence"]
+    subgraph Application ["3. 多模式推論與 mAP 評估"]
+        direction LR
+        Weights --> Inference["predict.py / demo.py<br/>(載入模型與 YAML 設定)"] --> Modes["多模式推論<br/>(單圖 / 影片 / 攝影機 / Gradio)"] --> Map["get_map.py 評估<br/>(mAP@0.5 76.05% 與 PR 曲線)"]
     end
 
-    subgraph Evaluation ["4. 評估與錯誤分析"]
-        Weights & Splits --> Map["get_map.py<br/>VOC test set 評估"]
-        Map --> MapOut["map_out/<br/>detection-results + ground-truth"]
-        MapOut --> Metrics["AP / mAP<br/>Precision-Recall curve"]
-        MapOut --> Analysis["scripts/analyze_detections.py<br/>threshold sweep + FP / FN 分析"]
-    end
+    Preparation --> Training --> Application
 
     classDef prepStyle fill:#fff9db,stroke:#f59f00,stroke-width:2px,color:#212529
     classDef trainStyle fill:#e7f5ff,stroke:#1971c2,stroke-width:2px,color:#212529
     classDef appStyle fill:#e6fcf5,stroke:#0ca678,stroke-width:2px,color:#212529
-    classDef evalStyle fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#212529
 
-    class Preparation,Dataset,Annotation,Splits,TrainLists prepStyle
-    class Training,Train,Freeze,Unfreeze,Weights trainStyle
-    class Application,Inference,Modes,Visuals appStyle
-    class Evaluation,Map,MapOut,Metrics,Analysis evalStyle
+    class Preparation,Dataset,Annotation,TrainLists prepStyle
+    class Training,Freeze,Unfreeze,Weights trainStyle
+    class Application,Inference,Modes,Map appStyle
 ```
 
 ### 2. RetinaNet (ResNet50 + FPN) 模型架構
@@ -74,33 +63,29 @@ flowchart TD
 %%{init: {'themeVariables': {'fontSize': '20px'}}}%%
 flowchart TD
     subgraph Features ["1. 多尺度特徵擷取"]
-        Input["輸入影像<br/>(600 × 600 × 3)"] --> Backbone["ResNet50 Backbone<br/>(C3 + C4 + C5 特徵圖)"]
-        Backbone --> FPN["Feature Pyramid Network<br/>(Top-down + Lateral Connections)"]
-        FPN --> Pyramid["P3 + P4 + P5 + P6 + P7<br/>(256-channel 特徵圖)"]
+        direction LR
+        Input["輸入影像<br/>(600 × 600 × 3)"] --> Backbone["ResNet50 Backbone<br/>(C3 + C4 + C5 特徵圖)"] --> FPN["Feature Pyramid Network<br/>(Top-down + Lateral Connections)"] --> Pyramid["P3 至 P7 特徵金字塔<br/>(256-channel 特徵圖)"]
     end
 
     subgraph Heads ["2. 共享 Retina Head"]
-        Pyramid --> Regression["Regression Head<br/>(4 Conv layers, Smooth L1 Loss)"]
-        Pyramid --> Classification["Classification Head<br/>(4 Conv layers + Sigmoid, Focal Loss)"]
-        Regression --> Offsets["各層 bbox offsets<br/>(4 values / anchor)"]
-        Classification --> Probabilities["各層 class probabilities<br/>(K values / anchor)"]
+        direction LR
+        Pyramid --> Regression["Regression Head<br/>(4 Conv, Smooth L1 Loss)"] & Classification["Classification Head<br/>(4 Conv + Sigmoid, Focal Loss)"]
     end
 
     subgraph Postprocess ["3. 推論後處理"]
-        Anchors["P3 至 P7 Anchors<br/>(5 base sizes × 3 scales × 3 ratios = 9 anchors)"] --> Decode["DecodeBox<br/>套用 bbox offsets"]
-        Offsets & Probabilities --> Decode
-        Decode --> Confidence["Confidence Filter<br/>過濾低分候選框"]
-        Confidence --> NMS["Class-wise NMS<br/>依 IoU 移除重疊框"]
-        NMS --> Output["最終偵測結果<br/>(bbox + class + confidence)"]
+        direction LR
+        Regression & Classification --> Decode["DecodeBox<br/>(套用 Anchor BBox Offsets)"] --> NMS["Class-wise NMS<br/>(過濾低分框與重疊框)"] --> Output["最終偵測結果<br/>(BBox + Class + Confidence)"]
     end
+
+    Features --> Heads --> Postprocess
 
     classDef featStyle fill:#e7f5ff,stroke:#1971c2,stroke-width:2px,color:#212529
     classDef headStyle fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#212529
     classDef postStyle fill:#e6fcf5,stroke:#0ca678,stroke-width:2px,color:#212529
 
     class Features,Input,Backbone,FPN,Pyramid featStyle
-    class Heads,Regression,Classification,Offsets,Probabilities headStyle
-    class Postprocess,Anchors,Decode,Confidence,NMS,Output postStyle
+    class Heads,Regression,Classification headStyle
+    class Postprocess,Decode,NMS,Output postStyle
 ```
 
 ---
@@ -178,7 +163,7 @@ python -m unittest discover tests
 
 ## 專案結構
 
-| 檔案 / 目錄 | 功能說明與規範 |
+| 檔案 / 目錄 | 功能說明與職責 |
 |---|---|
 | `configs/mask_retinanet.yaml` | 全域組態設定檔 (路徑、Anchor、輸入尺寸 600×600) |
 | `train.py` | 兩階段訓練腳本 (Freeze ➔ Unfreeze) |
