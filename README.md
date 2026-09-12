@@ -1,11 +1,10 @@
 # retinanet-face-mask-detection
 
-[![CI](https://github.com/kuotunyu/retinanet-face-mask-detection/actions/workflows/tests.yml/badge.svg)](https://github.com/kuotunyu/retinanet-face-mask-detection/actions/workflows/tests.yml)
+[![CI](https://github.com/kuotunyu/retinanet-face-mask-detection/actions/workflows/smoke-tests.yml/badge.svg)](https://github.com/kuotunyu/retinanet-face-mask-detection/actions/workflows/smoke-tests.yml)
 ![Python](https://img.shields.io/badge/Python-3.6-blue?logo=python&logoColor=white)
 ![TensorFlow](https://img.shields.io/badge/TensorFlow-1.13.2-orange?logo=tensorflow&logoColor=white)
 ![Keras](https://img.shields.io/badge/Keras-2.1.5-red?logo=keras&logoColor=white)
 ![mAP](https://img.shields.io/badge/mAP%400.5-76.05%25-brightgreen)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 本專案實作基於 **RetinaNet (ResNet50 + FPN)** 之口罩配戴狀態物件偵測 (Object Detection) 系統：針對包含正確配戴 (`with_mask`)、未配戴 (`without_mask`) 與配戴不正確 (`mask_weared_incorrect`) 進行三類別辨識。採用 Focal Loss 解決前景極度不平衡問題，提供 VOC 標註轉換、Freeze/Unfreeze 兩階段訓練、mAP@0.5 評估 (達到 **76.05%**)、多模式推論 (單圖/影片/攝影機) 與 Gradio 互動式 Web UI Demo。
 
@@ -185,4 +184,4 @@ python -m unittest discover tests
 
 ## 授權與聲明
 
-本專案採 [MIT License](LICENSE)。數據集請依原 [Kaggle Face Mask Detection Dataset](https://www.kaggle.com/datasets/andrewmvd/face-mask-detection) 規範使用。
+目前原始碼樹未附授權檔；先前 README 的 MIT 標示沒有對應的 `LICENSE` 文件。數據集請依原 [Kaggle Face Mask Detection Dataset](https://www.kaggle.com/datasets/andrewmvd/face-mask-detection) 規範使用。
